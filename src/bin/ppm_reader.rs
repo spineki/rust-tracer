@@ -7,7 +7,7 @@ fn main() {
     nannou::app(model)
         .update(update)
         .simple_window(view)
-        .size(600, 600)
+        .size((600.0 * 16.0 / 9.0) as u32, 600)
         .run();
 }
 

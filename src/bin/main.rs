@@ -1,7 +1,24 @@
 use gpu_attempt::{Color3, Point3, Ray, Vec3};
 
+fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> bool {
+    let oc = ray.origin() - *center;
+    let a = ray.direction().dot(&ray.direction());
+    let b = oc.dot(&ray.direction()) * 2.0;
+    let c = oc.dot(&oc) - radius * radius;
+    let discriminant = b * b - a * c * 4.0;
+
+    // 0 => not intersection with the sphre
+    // 1 => one intersection (tangent)
+    // 2 => fully intersection (going trought)
+    discriminant > 0.0
+}
+
 fn ray_color(ray: &Ray) -> Color3 {
     let unit_direction = ray.direction().normalize();
+
+    if hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, &ray) {
+        return Color3::new(1.0, 0.0, 0.0);
+    }
 
     let t = 0.5 * (unit_direction.y() + 1.0);
     Color3::new(1.0, 1.0, 1.0) * (1.0 - t) + Color3::new(0.5, 0.7, 1.0) * t
