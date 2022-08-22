@@ -2,10 +2,10 @@ use gpu_attempt::{Color3, Point3, Ray, Vec3};
 
 fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> f64 {
     let oc = ray.origin() - *center;
-    let a = ray.direction().dot(&ray.direction());
-    let b = oc.dot(&ray.direction()) * 2.0;
-    let c = oc.dot(&oc) - radius * radius;
-    let discriminant = b * b - a * c * 4.0;
+    let a = ray.direction().mag_squared();
+    let half_b = oc.dot(&ray.direction());
+    let c = oc.mag_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
 
     // 0 => not intersection with the sphre
     // 1 => one intersection (tangent)
@@ -15,7 +15,7 @@ fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> f64 {
     }
 
     // returning the root
-    (-b - discriminant.sqrt()) / (2.0 * a)
+    (-half_b - discriminant.sqrt()) / a
 }
 
 fn ray_color(ray: &Ray) -> Color3 {
