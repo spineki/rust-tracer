@@ -1,32 +1,13 @@
-use gpu_attempt::{Color3, Point3, Ray, Vec3};
+use gpu_attempt::{sphere::Sphere, Color3, Hittable, HittableList, Point3, Ray, Vec3};
 
-fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> f64 {
-    let oc = ray.origin() - *center;
-    let a = ray.direction().mag_squared();
-    let half_b = oc.dot(&ray.direction());
-    let c = oc.mag_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-
-    // 0 => not intersection with the sphre
-    // 1 => one intersection (tangent)
-    // 2 => fully intersection (going trought)
-    if discriminant < 0.0 {
-        return -1.0;
-    }
-
-    // returning the root
-    (-half_b - discriminant.sqrt()) / a
-}
-
-fn ray_color(ray: &Ray) -> Color3 {
-    let mut t = hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, &ray);
-    if t > 0.0 {
-        let N = (ray.at(t) - Vec3::new(0.0, 0.0, -1.0)).normalize();
-        return Color3::new(N.x() + 1.0, N.y() + 1.0, N.z() + 1.0) * 0.5;
+fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color3 {
+    if let Some(hit_record) = world.hit(ray, 0.0, f64::INFINITY) {
+        return (hit_record.normal + Color3::new(1.0, 1.0, 1.0)) * 0.5;
     }
 
     let unit_direction = ray.direction().normalize();
-    t = 0.5 * (unit_direction.y() + 1.0);
+    let t = 0.5 * (unit_direction.y() + 1.0);
+
     Color3::new(1.0, 1.0, 1.0) * (1.0 - t) + Color3::new(0.5, 0.7, 1.0) * t
 }
 
@@ -35,6 +16,18 @@ fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let image_width: u32 = 400;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
+
+    // World
+    let mut world = HittableList::new();
+    // adding two sphres to the world
+
+    let point1 = Point3::new(0.0, 0.0, -1.0);
+    let sphere = Sphere::new(&point1, 0.5);
+    world.add(&sphere);
+
+    let point2 = Point3::new(0.0, -100.0, -1.0);
+    let sphere2 = Sphere::new(&point2, 100.0);
+    world.add(&sphere2);
 
     // Camera
     let viewport_height = 2.0;
@@ -46,6 +39,8 @@ fn main() {
     let vertical = Vec3::new(0.0, viewport_height, 0.0);
     let lower_left_corner =
         origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+
+    // Render
 
     println!("P3");
     println!("{image_width} {image_height}");
@@ -59,7 +54,7 @@ fn main() {
                 &origin,
                 &(lower_left_corner + horizontal * u + vertical * v - origin),
             );
-            let pixel_color = ray_color(&ray);
+            let pixel_color = ray_color(&ray, &world);
             pixel_color.write();
         }
         println!("");
