@@ -1,5 +1,7 @@
 use std::ops;
 
+use rand::Rng;
+
 /// A 3 dimension vector type
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Vec3 {
@@ -15,7 +17,12 @@ impl Color3 {
     pub fn write(&self, samples_per_pixel: u32) {
         let scale = 1.0 / samples_per_pixel as f64;
 
-        let (r, g, b) = (self.x() * scale, self.y() * scale, self.z() * scale);
+        // scale the color per sample and add a gamma correct of 2 (sqrrt = power 1/2)
+        let (r, g, b) = (
+            (self.x() * scale).sqrt(),
+            (self.y() * scale).sqrt(),
+            (self.z() * scale).sqrt(),
+        );
 
         let ir = (256.0 * r.clamp(0.0, 0.999)) as u32;
         let ig = (256.0 * g.clamp(0.0, 0.999)) as u32;
@@ -24,6 +31,7 @@ impl Color3 {
         println!("{ir} {ig} {ib}");
     }
 
+    /// a black Color3 with all chanels at 0
     pub fn black() -> Self {
         Self::new(0.0, 0.0, 0.0)
     }
@@ -31,7 +39,32 @@ impl Color3 {
 
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Vec3 { x, y, z }
+        Self { x, y, z }
+    }
+
+    // returns a new random vector with coordinates in the specified range
+    pub fn new_clamped_random(min: f64, max: f64, rng: &mut impl Rng) -> Self {
+        Self {
+            x: rng.gen_range(min..=max),
+            y: rng.gen_range(min..=max),
+            z: rng.gen_range(min..=max),
+        }
+    }
+
+    /// create a vector in the unit sphere. Creating a random vector in the unit cube until it's in the sphere
+    /// Probability of success per iteration. 4/3 pi / 8 ~= 0.52... not so great but will converge eventually
+    /// ugly
+    pub fn new_randow_in_unit_sphere(rng: &mut impl Rng) -> Self {
+        loop {
+            let vector = Self::new_clamped_random(-1.0, 1.0, rng);
+            if vector.mag_squared() < 1.0 {
+                return vector;
+            }
+        }
+    }
+
+    pub fn new_randow_unit_vector(rng: &mut impl Rng) -> Self {
+        Self::new_randow_in_unit_sphere(rng).normalize()
     }
 
     pub fn x(&self) -> f64 {
@@ -173,6 +206,7 @@ mod tests {
         );
 
         assert_eq!(Vec3::new(1.0, 2.0, 3.0) * 2.0, Vec3::new(2.0, 4.0, 6.0));
+        assert_eq!(Vec3::new(1.0, 2.0, 3.0) * -1.0, Vec3::new(-1.0, -2.0, -3.0));
         assert_eq!(Vec3::new(2.0, 4.0, 6.0) / 2.0, Vec3::new(1.0, 2.0, 3.0));
     }
 }

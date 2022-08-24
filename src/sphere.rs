@@ -47,3 +47,68 @@ impl Sphere {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{Point3, Ray, Vec3};
+
+    use super::*;
+
+    #[test]
+    fn it_should_detect_intersection() {
+        // unit sphere
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+
+        // ray comming from the left
+        let ray = Ray::new(&Vec3::new(-100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
+
+        // hit result
+        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY);
+
+        assert_eq!(
+            hit_record,
+            Some(HitRecord {
+                point: Point3::new(-1.0, 0.0, 0.0),
+                normal: Vec3::new(-1.0, 0.0, 0.0),
+                t: 99.0,
+                front_face: true
+            })
+        );
+    }
+
+    #[test]
+    fn it_should_detect_intersection_from_within() {
+        // unit sphere
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+
+        // ray comming from the center (left, to right)
+        let ray = Ray::new(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
+
+        // hit result
+        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY);
+
+        assert_eq!(
+            hit_record,
+            Some(HitRecord {
+                point: Point3::new(1.0, 0.0, 0.0),
+                normal: Vec3::new(-1.0, 0.0, 0.0), //? notice the normal oriented to the left
+                t: 1.0,
+                front_face: false //? notice that the inner colision is detected
+            })
+        );
+    }
+
+    #[test]
+    fn it_should_ignore_outer_rays() {
+        // unit sphere
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+
+        // ray comming from the righ toward right (wrong direction)
+        let ray = Ray::new(&Vec3::new(100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
+
+        // hit result
+        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY);
+
+        assert!(hit_record.is_none());
+    }
+}

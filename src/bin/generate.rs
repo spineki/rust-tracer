@@ -16,7 +16,7 @@ fn main() {
                 0.25,
             );
 
-            color.write();
+            color.write(100);
         }
         println!("");
     }

@@ -22,17 +22,90 @@ impl<'a> HittableList<'a> {
 
 impl Hittable for HittableList<'_> {
     fn hit(&self, ray: &crate::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut closest_so_far = t_max;
+        let mut closest_hit_record: Option<HitRecord> = None;
 
         for object in &self.objects {
             if let Some(hit_record) = object.hit(ray, t_min, t_max) {
-                closest_so_far = hit_record.t;
-
-                // todo change this to only take into account the closest element
-                return Some(hit_record);
+                match closest_hit_record {
+                    None => {
+                        closest_hit_record = Some(hit_record);
+                    }
+                    Some(ref closest_hit_record_value) => {
+                        if hit_record.t < closest_hit_record_value.t {
+                            closest_hit_record = Some(hit_record);
+                        }
+                    }
+                }
             }
         }
 
-        None
+        closest_hit_record
+    }
+}
+
+#[cfg(test)]
+
+mod test {
+
+    use super::{HitRecord, HittableList};
+    use crate::{Camera, Hittable, Point3, Ray, Sphere, Vec3};
+
+    #[test]
+    fn it_should_detect_intersection_of_aligned_spheres() {
+        // unit sphere centered on 0
+        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        // centered on 2 (not overlapping)
+        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0);
+
+        let mut world = HittableList::new();
+        world.add(&sphere1);
+        world.add(&sphere2);
+
+        // ray comming from the left
+        let ray = Ray::new(&Vec3::new(-100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
+
+        // hit result
+        let hit_record = world.hit(&ray, 0.000, f64::INFINITY);
+
+        // only hitting left sphere
+        assert_eq!(
+            hit_record,
+            Some(HitRecord {
+                point: Point3::new(-1.0, 0.0, 0.0),
+                normal: Vec3::new(-1.0, 0.0, 0.0),
+                t: 99.0,
+                front_face: true
+            })
+        );
+    }
+
+    #[test]
+
+    fn it_should_detect_intersection_with_one_sphere() {
+        // unit sphere centered on 0
+        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        // centered on 2 (not overlapping)
+        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0);
+
+        let mut world = HittableList::new();
+        world.add(&sphere1);
+        world.add(&sphere2);
+
+        // ray comming from the left
+        let ray = Ray::new(&Point3::new(1.5, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
+
+        // hit result
+        let hit_record = world.hit(&ray, 0.000, f64::INFINITY);
+
+        // only hitting left sphere
+        assert_eq!(
+            hit_record,
+            Some(HitRecord {
+                point: Point3::new(2.0, 0.0, 0.0),
+                normal: Vec3::new(-1.0, 0.0, 0.0),
+                t: 0.5,
+                front_face: true
+            })
+        );
     }
 }

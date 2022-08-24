@@ -1,5 +1,6 @@
 use crate::{Point3, Ray, Vec3};
 
+#[derive(Debug, PartialEq)]
 pub struct HitRecord {
     /// point hit by the ray
     pub point: Point3,
