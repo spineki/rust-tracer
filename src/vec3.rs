@@ -12,12 +12,20 @@ pub type Point3 = Vec3;
 pub type Color3 = Vec3;
 
 impl Color3 {
-    pub fn write(&self) {
-        let ir = (255.99 * self.x()) as u32;
-        let ig = (255.99 * self.y()) as u32;
-        let ib = (255.99 * self.z()) as u32;
+    pub fn write(&self, samples_per_pixel: u32) {
+        let scale = 1.0 / samples_per_pixel as f64;
+
+        let (r, g, b) = (self.x() * scale, self.y() * scale, self.z() * scale);
+
+        let ir = (256.0 * r.clamp(0.0, 0.999)) as u32;
+        let ig = (256.0 * g.clamp(0.0, 0.999)) as u32;
+        let ib = (256.0 * b.clamp(0.0, 0.999)) as u32;
 
         println!("{ir} {ig} {ib}");
+    }
+
+    pub fn black() -> Self {
+        Self::new(0.0, 0.0, 0.0)
     }
 }
 

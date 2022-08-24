@@ -1,4 +1,5 @@
-use gpu_attempt::{sphere::Sphere, Color3, Hittable, HittableList, Point3, Ray, Vec3};
+use gpu_attempt::{camera::Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3};
+use rand::Rng;
 
 fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color3 {
     if let Some(hit_record) = world.hit(ray, 0.0, f64::INFINITY) {
@@ -12,10 +13,14 @@ fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color3 {
 }
 
 fn main() {
+    // Rng
+    let mut rng = rand::thread_rng();
+
     // Image
     let aspect_ratio = 16.0 / 9.0;
     let image_width: u32 = 400;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
+    let samples_per_pixel = 100;
 
     // World
     let mut world = HittableList::new();
@@ -30,16 +35,7 @@ fn main() {
     world.add(&sphere2);
 
     // Camera
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
-
+    let camera = Camera::new();
     // Render
 
     println!("P3");
@@ -48,14 +44,17 @@ fn main() {
 
     for j in (0..image_height).rev() {
         for i in 0..image_width {
-            let u = i as f64 / (image_width - 1) as f64;
-            let v = j as f64 / (image_height - 1) as f64;
-            let ray = Ray::new(
-                &origin,
-                &(lower_left_corner + horizontal * u + vertical * v - origin),
-            );
-            let pixel_color = ray_color(&ray, &world);
-            pixel_color.write();
+            let mut pixel_color = Color3::black();
+
+            for s in 0..samples_per_pixel {
+                let u = (i as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
+                let v = (j as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
+
+                let ray = camera.get_ray(u, v);
+
+                pixel_color += ray_color(&ray, &world);
+            }
+            pixel_color.write(samples_per_pixel);
         }
         println!("");
     }
