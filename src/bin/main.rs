@@ -57,6 +57,9 @@ fn main() {
     let sphere3 = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), 0.5, &material_left);
     world.add(&sphere3);
 
+    let sphere_hollow = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), -0.4, &material_left);
+    world.add(&sphere_hollow);
+
     let sphere4 = Sphere::new(&Point3::new(1.0, 0.0, -1.0), 0.5, &material_right);
     world.add(&sphere4);
 

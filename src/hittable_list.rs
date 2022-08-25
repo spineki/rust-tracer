@@ -48,7 +48,7 @@ impl Hittable for HittableList<'_> {
 mod test {
 
     use super::{HitRecord, HittableList};
-    use crate::{Color3, Hittable, Lambertian, Point3, Ray, Sphere, Vec3};
+    use crate::{material::Lambertian, Color3, Hittable, Point3, Ray, Sphere, Vec3};
 
     #[test]
     fn it_should_detect_intersection_of_aligned_spheres() {
