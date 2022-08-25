@@ -1,6 +1,6 @@
 use gpu_attempt::{
     material::{Dielectric, Lambertian, Metal},
-    Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere,
+    Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3,
 };
 use rand::{rngs::ThreadRng, Rng};
 
@@ -57,14 +57,19 @@ fn main() {
     let sphere3 = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), 0.5, &material_left);
     world.add(&sphere3);
 
-    let sphere_hollow = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), -0.4, &material_left);
+    let sphere_hollow = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), -0.45, &material_left);
     world.add(&sphere_hollow);
 
     let sphere4 = Sphere::new(&Point3::new(1.0, 0.0, -1.0), 0.5, &material_right);
     world.add(&sphere4);
 
     // Camera
-    let camera = Camera::new();
+    let look_from = Point3::new(-2.0, 2.0, 1.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let vertical_fov = 20.0;
+
+    let camera = Camera::new(&look_from, &look_at, &vup, vertical_fov, aspect_ratio);
     // Render
 
     println!("P3");
