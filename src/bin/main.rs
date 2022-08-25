@@ -1,5 +1,5 @@
 use gpu_attempt::{
-    material::{Dielectric, Lambertian, Metal},
+    material::{Dielectric, Lambertian, Material, Metal},
     Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3,
 };
 use rand::{rngs::ThreadRng, Rng};
@@ -33,44 +33,85 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     // Image
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width: u32 = 400;
+    let aspect_ratio = 3.0 / 2.0;
+    let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
+    let samples_per_pixel = 500;
     let max_depth = 50;
-    let samples_per_pixel = 100;
 
     // World
+
     let mut world = HittableList::new();
-    // adding two sphres to the world
 
-    let material_ground = Lambertian::new(&Color3::new(0.8, 0.8, 0.0));
-    let material_center = Lambertian::new(&Color3::new(0.1, 0.2, 0.5));
-    let material_left = Dielectric::new(1.5);
-    let material_right = Metal::new(&Color3::new(0.8, 0.6, 0.2), 0.0);
+    let material_ground = Lambertian::new(&Color3::new(0.5, 0.5, 0.5));
+    let sphere_ground = Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, &material_ground);
+    world.add(&sphere_ground);
 
-    let sphere1 = Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0, &material_ground);
-    world.add(&sphere1);
+    let material_dielectric = Dielectric::new(1.5);
+    let sphere_dialectric = Sphere::new(&Point3::new(0.0, 1.0, 0.0), 1.0, &material_dielectric);
+    world.add(&sphere_dialectric);
 
-    let sphere2 = Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5, &material_center);
-    world.add(&sphere2);
+    let material_lambertian = Lambertian::new(&Color3::new(0.4, 0.2, 0.1));
+    let sphere_lambertian = Sphere::new(&Point3::new(-4.0, 1.0, 0.0), 1.0, &material_lambertian);
+    world.add(&sphere_lambertian);
 
-    let sphere3 = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), 0.5, &material_left);
-    world.add(&sphere3);
+    let material_metal = Metal::new(&Color3::new(0.7, 0.6, 0.5), 0.0);
+    let sphere_metal = Sphere::new(&Point3::new(4.0, 1.0, 0.0), 1.0, &material_metal);
+    world.add(&sphere_metal);
 
-    let sphere_hollow = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), -0.45, &material_left);
-    world.add(&sphere_hollow);
+    let mut spheres_element: Vec<(Point3, Box<dyn Material>)> = Vec::new();
+    let mut spheres: Vec<Sphere> = Vec::new();
 
-    let sphere4 = Sphere::new(&Point3::new(1.0, 0.0, -1.0), 0.5, &material_right);
-    world.add(&sphere4);
+    for a in -11..11 {
+        for b in -11..11 {
+            let random_choose: f64 = rng.gen();
+            let center = Point3::new(
+                a as f64 + 0.9 * rng.gen::<f64>(),
+                0.2,
+                b as f64 + 0.9 * rng.gen::<f64>(),
+            );
 
-    // Camera
-    let look_from = Point3::new(-2.0, 2.0, 1.0);
-    let look_at = Point3::new(0.0, 0.0, -1.0);
+            if (center - Point3::new(4.0, 0.2, 0.0)).mag() > 0.9 {
+                let sphere_material: Box<dyn Material> = if random_choose < 0.8 {
+                    // lambertian (diffuse)
+                    let albedo = Color3::new_clamped_random(0.0, 1.0, &mut rng)
+                        .hadamar(&Color3::new_clamped_random(0.0, 1.0, &mut rng));
+
+                    Box::new(Lambertian::new(&albedo))
+                } else if random_choose < 0.95 {
+                    // metal
+                    let albedo = Color3::new_clamped_random(0.5, 1.0, &mut rng);
+                    let fuzziness = rng.gen_range(0.0..=0.5);
+
+                    Box::new(Metal::new(&albedo, fuzziness))
+                } else {
+                    //glass
+                    Box::new(Dielectric::new(1.5))
+                };
+
+                spheres_element.push((center, sphere_material));
+            }
+        }
+    }
+
+    for (center, material) in &spheres_element {
+        let sphere = Sphere::new(center, 0.2, material.as_ref());
+        spheres.push(sphere);
+    }
+
+    for sphere in &spheres {
+        world.add(sphere);
+    }
+
+    // Camera -----------------------------------
+    let look_from = Point3::new(13.0, 2.0, 3.0);
+    let look_at = Point3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let vertical_fov = 20.0;
 
     let camera = Camera::new(&look_from, &look_at, &vup, vertical_fov, aspect_ratio);
-    // Render
+
+    // Render -----------------------------------
 
     println!("P3");
     println!("{image_width} {image_height}");
