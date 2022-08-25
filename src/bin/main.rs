@@ -1,7 +1,7 @@
-use gpu_attempt::{camera::Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3};
-use rand::Rng;
+use gpu_attempt::{Camera, Color3, Hittable, HittableList, Lambertian, Metal, Point3, Ray, Sphere};
+use rand::{rngs::ThreadRng, Rng};
 
-fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut impl Rng) -> Color3 {
+fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut ThreadRng) -> Color3 {
     // the ray bounced too many times, we abort the ray and return no light (black)
     if depth <= 0 {
         return Color3::new(0.0, 0.0, 0.0);
@@ -9,12 +9,14 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut impl Rng) ->
 
     // using 0.001 instead of 0.0 to fix shadow acne (ray reflected not exactly at 0)
     if let Some(hit_record) = world.hit(ray, 0.001, f64::INFINITY) {
-        let target = hit_record.normal + Vec3::new_randow_unit_vector(rng);
+        let (scattered, attenuation, is_reflected) =
+            hit_record.material.scatter(ray, &hit_record, rng);
 
-        // using bouncing ray from the hit record to update the color
-        let bouncing_ray = Ray::new(&hit_record.point, &target);
+        if is_reflected {
+            return ray_color(&scattered, world, depth - 1, rng).hadamar(&attenuation);
+        }
 
-        return ray_color(&bouncing_ray, world, depth - 1, rng) * 0.5;
+        return Color3::black();
     }
 
     let unit_direction = ray.direction().normalize();
@@ -38,13 +40,22 @@ fn main() {
     let mut world = HittableList::new();
     // adding two sphres to the world
 
-    let point1 = Point3::new(0.0, 0.0, -1.0);
-    let sphere1 = Sphere::new(&point1, 0.5);
+    let material_ground = Lambertian::new(&Color3::new(0.8, 0.8, 0.0));
+    let material_center = Lambertian::new(&Color3::new(0.7, 0.3, 0.3));
+    let material_left = Metal::new(&Color3::new(0.8, 0.8, 0.8));
+    let material_right = Metal::new(&Color3::new(0.8, 0.6, 0.2));
+
+    let sphere1 = Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0, &material_ground);
     world.add(&sphere1);
 
-    let point2 = Point3::new(0.0, -100.5, -1.0);
-    let sphere2 = Sphere::new(&point2, 100.0);
+    let sphere2 = Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5, &material_center);
     world.add(&sphere2);
+
+    let sphere3 = Sphere::new(&Point3::new(-1.0, 0.0, -1.0), 0.5, &material_left);
+    world.add(&sphere3);
+
+    let sphere4 = Sphere::new(&Point3::new(1.0, 0.0, -1.0), 0.5, &material_right);
+    world.add(&sphere4);
 
     // Camera
     let camera = Camera::new();

@@ -21,7 +21,7 @@ impl<'a> HittableList<'a> {
 }
 
 impl Hittable for HittableList<'_> {
-    fn hit(&self, ray: &crate::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, ray: &crate::Ray, t_min: f64, t_max: f64) -> Option<HitRecord<'_>> {
         let mut closest_hit_record: Option<HitRecord> = None;
 
         for object in &self.objects {
@@ -48,14 +48,16 @@ impl Hittable for HittableList<'_> {
 mod test {
 
     use super::{HitRecord, HittableList};
-    use crate::{Camera, Hittable, Point3, Ray, Sphere, Vec3};
+    use crate::{Color3, Hittable, Lambertian, Point3, Ray, Sphere, Vec3};
 
     #[test]
     fn it_should_detect_intersection_of_aligned_spheres() {
+        let material_black = Lambertian::new(&Color3::black());
+
         // unit sphere centered on 0
-        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0, &material_black);
         // centered on 2 (not overlapping)
-        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0);
+        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0, &material_black);
 
         let mut world = HittableList::new();
         world.add(&sphere1);
@@ -65,27 +67,32 @@ mod test {
         let ray = Ray::new(&Vec3::new(-100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
 
         // hit result
-        let hit_record = world.hit(&ray, 0.000, f64::INFINITY);
+        let hit_record = world.hit(&ray, 0.000, f64::INFINITY).unwrap();
 
         // only hitting left sphere
-        assert_eq!(
-            hit_record,
-            Some(HitRecord {
-                point: Point3::new(-1.0, 0.0, 0.0),
-                normal: Vec3::new(-1.0, 0.0, 0.0),
-                t: 99.0,
-                front_face: true
-            })
-        );
+        let expected_record = HitRecord {
+            point: Point3::new(-1.0, 0.0, 0.0),
+            normal: Vec3::new(-1.0, 0.0, 0.0),
+            t: 99.0,
+            front_face: true,
+            material: &material_black,
+        };
+
+        assert_eq!(hit_record.point, expected_record.point);
+        assert_eq!(hit_record.normal, expected_record.normal);
+        assert_eq!(hit_record.t, expected_record.t);
+        assert_eq!(hit_record.front_face, expected_record.front_face);
     }
 
     #[test]
 
     fn it_should_detect_intersection_with_one_sphere() {
+        let material_black = Lambertian::new(&Color3::black());
+
         // unit sphere centered on 0
-        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere1 = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0, &material_black);
         // centered on 2 (not overlapping)
-        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0);
+        let sphere2 = Sphere::new(&Vec3::new(3.0, 0.0, 0.0), 1.0, &material_black);
 
         let mut world = HittableList::new();
         world.add(&sphere1);
@@ -95,17 +102,20 @@ mod test {
         let ray = Ray::new(&Point3::new(1.5, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
 
         // hit result
-        let hit_record = world.hit(&ray, 0.000, f64::INFINITY);
+        let hit_record = world.hit(&ray, 0.000, f64::INFINITY).unwrap();
 
         // only hitting left sphere
-        assert_eq!(
-            hit_record,
-            Some(HitRecord {
-                point: Point3::new(2.0, 0.0, 0.0),
-                normal: Vec3::new(-1.0, 0.0, 0.0),
-                t: 0.5,
-                front_face: true
-            })
-        );
+        let expected_record = HitRecord {
+            point: Point3::new(2.0, 0.0, 0.0),
+            normal: Vec3::new(-1.0, 0.0, 0.0),
+            t: 0.5,
+            front_face: true,
+            material: &material_black,
+        };
+
+        assert_eq!(hit_record.point, expected_record.point);
+        assert_eq!(hit_record.normal, expected_record.normal);
+        assert_eq!(hit_record.t, expected_record.t);
+        assert_eq!(hit_record.front_face, expected_record.front_face);
     }
 }

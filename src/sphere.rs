@@ -1,11 +1,12 @@
-use crate::{HitRecord, Hittable, Point3};
+use crate::{HitRecord, Hittable, Material, Point3};
 
-pub struct Sphere {
+pub struct Sphere<'a> {
     center: Point3,
     radius: f64,
+    material: &'a dyn Material,
 }
 
-impl Hittable for Sphere {
+impl<'a> Hittable for Sphere<'a> {
     fn hit(&self, ray: &crate::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().mag_squared();
@@ -33,75 +34,88 @@ impl Hittable for Sphere {
         let t = root;
         let point = ray.at(t);
         let outward_normal = (point - self.center) / self.radius;
-        let hit_record = HitRecord::new(&ray, &point, &outward_normal, t);
+        let hit_record = HitRecord::new(&ray, &point, &outward_normal, self.material, t);
 
         Some(hit_record)
     }
 }
 
-impl Sphere {
-    pub fn new(center: &Point3, radius: f64) -> Self {
+impl<'a> Sphere<'a> {
+    pub fn new(center: &Point3, radius: f64, material: &'a dyn Material) -> Self {
         Sphere {
             center: *center,
             radius,
+            material,
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{Point3, Ray, Vec3};
+    use crate::{Color3, Lambertian, Point3, Ray, Vec3};
 
     use super::*;
 
     #[test]
     fn it_should_detect_intersection() {
+        let material_black = Lambertian::new(&Color3::black());
+
         // unit sphere
-        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0, &material_black);
 
         // ray comming from the left
         let ray = Ray::new(&Vec3::new(-100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
 
         // hit result
-        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY).unwrap();
 
-        assert_eq!(
-            hit_record,
-            Some(HitRecord {
-                point: Point3::new(-1.0, 0.0, 0.0),
-                normal: Vec3::new(-1.0, 0.0, 0.0),
-                t: 99.0,
-                front_face: true
-            })
-        );
+        let expected_record = HitRecord {
+            front_face: true,
+            material: &material_black,
+            normal: Vec3::new(-1.0, 0.0, 0.0),
+            point: Point3::new(-1.0, 0.0, 0.0),
+            t: 99.0,
+        };
+
+        assert_eq!(hit_record.point, expected_record.point);
+        assert_eq!(hit_record.normal, expected_record.normal);
+        assert_eq!(hit_record.t, expected_record.t);
+        assert_eq!(hit_record.front_face, expected_record.front_face);
     }
 
     #[test]
     fn it_should_detect_intersection_from_within() {
+        let material_black = Lambertian::new(&Color3::black());
+
         // unit sphere
-        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0, &material_black);
 
         // ray comming from the center (left, to right)
         let ray = Ray::new(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
 
         // hit result
-        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY);
+        let hit_record = sphere.hit(&ray, 0.000, f64::INFINITY).unwrap();
 
-        assert_eq!(
-            hit_record,
-            Some(HitRecord {
-                point: Point3::new(1.0, 0.0, 0.0),
-                normal: Vec3::new(-1.0, 0.0, 0.0), //? notice the normal oriented to the left
-                t: 1.0,
-                front_face: false //? notice that the inner colision is detected
-            })
-        );
+        let expected_record = HitRecord {
+            front_face: false, //? notice that the inner colision is detected
+            material: &material_black,
+            normal: Vec3::new(-1.0, 0.0, 0.0), //? notice the normal oriented to the left
+            point: Point3::new(1.0, 0.0, 0.0),
+            t: 1.0,
+        };
+
+        assert_eq!(hit_record.point, expected_record.point);
+        assert_eq!(hit_record.normal, expected_record.normal);
+        assert_eq!(hit_record.t, expected_record.t);
+        assert_eq!(hit_record.front_face, expected_record.front_face);
     }
 
     #[test]
     fn it_should_ignore_outer_rays() {
+        let material_black = Lambertian::new(&Color3::black());
+
         // unit sphere
-        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let sphere = Sphere::new(&Vec3::new(0.0, 0.0, 0.0), 1.0, &material_black);
 
         // ray comming from the righ toward right (wrong direction)
         let ray = Ray::new(&Vec3::new(100.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));

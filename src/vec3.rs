@@ -77,6 +77,18 @@ impl Vec3 {
         self.z
     }
 
+    /// Return true if close to zero in all dimension (normen 1)
+    pub fn is_near_zero(&self) -> bool {
+        let epsilon = 10e-8;
+
+        self.x.abs() < epsilon && self.y.abs() < epsilon && self.z.abs() < epsilon
+    }
+
+    // reflect the current vector along a given normal
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        *self - *n * 2.0 * self.dot(n)
+    }
+
     /// magnitude of the vector (careful, a sqrt is used)
     pub fn mag(&self) -> f64 {
         self.mag_squared().sqrt()
@@ -99,6 +111,16 @@ impl Vec3 {
             self.z() * other.x() - self.x() * other.z(),
             self.x() * other.y() - self.y() * other.x(),
         )
+    }
+
+    /// create a vector with coordinates multiplied term by term
+    /// e.g. (1, 2, 3).hadamar((2, 3, 4)) = (2, 6, 12)
+    pub fn hadamar(&self, other: &Self) -> Self {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
     }
 
     pub fn normalize(&self) -> Self {
