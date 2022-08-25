@@ -1,4 +1,4 @@
-use crate::{HitRecord, Hittable, Material, Point3};
+use crate::{material::Material, HitRecord, Hittable, Point3};
 
 pub struct Sphere<'a> {
     center: Point3,
@@ -52,7 +52,7 @@ impl<'a> Sphere<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Color3, Lambertian, Point3, Ray, Vec3};
+    use crate::{material::Lambertian, Color3, Point3, Ray, Vec3};
 
     use super::*;
 

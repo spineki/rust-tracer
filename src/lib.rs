@@ -1,5 +1,4 @@
-mod material;
-pub use material::{Lambertian, Material, Metal};
+pub mod material;
 
 mod camera;
 pub use camera::Camera;

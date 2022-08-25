@@ -1,4 +1,7 @@
-use gpu_attempt::{Camera, Color3, Hittable, HittableList, Lambertian, Metal, Point3, Ray, Sphere};
+use gpu_attempt::{
+    material::{Dielectric, Lambertian, Metal},
+    Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere,
+};
 use rand::{rngs::ThreadRng, Rng};
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut ThreadRng) -> Color3 {
@@ -41,8 +44,8 @@ fn main() {
     // adding two sphres to the world
 
     let material_ground = Lambertian::new(&Color3::new(0.8, 0.8, 0.0));
-    let material_center = Lambertian::new(&Color3::new(0.7, 0.3, 0.3));
-    let material_left = Metal::new(&Color3::new(0.8, 0.8, 0.8), 0.3);
+    let material_center = Dielectric::new(1.5);
+    let material_left = Dielectric::new(1.5);
     let material_right = Metal::new(&Color3::new(0.8, 0.6, 0.2), 1.0);
 
     let sphere1 = Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0, &material_ground);

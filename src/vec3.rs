@@ -35,6 +35,10 @@ impl Color3 {
     pub fn black() -> Self {
         Self::new(0.0, 0.0, 0.0)
     }
+
+    pub fn white() -> Self {
+        Self::new(1.0, 1.0, 1.0)
+    }
 }
 
 impl Vec3 {
@@ -84,11 +88,6 @@ impl Vec3 {
         self.x.abs() < epsilon && self.y.abs() < epsilon && self.z.abs() < epsilon
     }
 
-    // reflect the current vector along a given normal
-    pub fn reflect(&self, n: &Vec3) -> Vec3 {
-        *self - *n * 2.0 * self.dot(n)
-    }
-
     /// magnitude of the vector (careful, a sqrt is used)
     pub fn mag(&self) -> f64 {
         self.mag_squared().sqrt()
@@ -98,6 +97,11 @@ impl Vec3 {
     pub fn mag_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
+
+    pub fn normalize(&self) -> Self {
+        self / self.mag()
+    }
+    // Products ---------------------------------
 
     /// Dot product between vectors
     pub fn dot(&self, other: &Self) -> f64 {
@@ -123,8 +127,19 @@ impl Vec3 {
         }
     }
 
-    pub fn normalize(&self) -> Self {
-        self / self.mag()
+    // Physic -----------------------------------
+    /// reflect the current vector along a given normal
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        *self - *n * 2.0 * self.dot(n)
+    }
+
+    /// Refract the light knowing a normal and the ratio of material indices
+    pub fn refract(&self, n: &Vec3, refraction_ratio: f64) -> Vec3 {
+        let cos_theta = (*self * -1.0).dot(n).min(1.0);
+        let r_out_perpendicular = (*self + *n * cos_theta) * refraction_ratio;
+        let r_out_parallel = *n * -1.0 * (1.0 - r_out_perpendicular.mag_squared()).abs().sqrt();
+
+        r_out_perpendicular + r_out_parallel
     }
 }
 

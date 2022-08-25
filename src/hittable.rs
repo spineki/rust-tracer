@@ -1,4 +1,4 @@
-use crate::{Material, Point3, Ray, Vec3};
+use crate::{material::Material, Point3, Ray, Vec3};
 
 #[derive(Debug)]
 pub struct HitRecord<'a> {
