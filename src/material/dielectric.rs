@@ -30,9 +30,19 @@ impl Material for Dielectric {
         };
 
         let unit_direction = ray_in.direction().normalize();
-        let refracted = unit_direction.refract(&hit_record.normal, refraction_ratio);
 
-        let ray_scattered = Ray::new(&hit_record.point, &refracted);
+        let cos_theta = (unit_direction * -1.0).dot(&hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+
+        let direction = if cannot_refract {
+            unit_direction.reflect(&hit_record.normal)
+        } else {
+            unit_direction.refract(&hit_record.normal, refraction_ratio)
+        };
+
+        let ray_scattered = Ray::new(&hit_record.point, &direction);
 
         (ray_scattered, Color3::white(), true)
     }
