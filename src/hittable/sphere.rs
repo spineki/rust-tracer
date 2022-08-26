@@ -1,4 +1,8 @@
-use crate::{material::Material, HitRecord, Hittable, Point3};
+use crate::{
+    hittable::{HitRecord, Hittable},
+    material::Material,
+    Point3,
+};
 
 pub struct Sphere<'a> {
     center: Point3,

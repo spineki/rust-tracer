@@ -1,7 +1,7 @@
 use rand::rngs::ThreadRng;
 
 use super::Material;
-use crate::{Color3, HitRecord, Ray, Vec3};
+use crate::{hittable::HitRecord, Color3, Ray, Vec3};
 
 #[derive(Debug)]
 pub struct Lambertian {

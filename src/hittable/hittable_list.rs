@@ -1,4 +1,4 @@
-use crate::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable};
 
 pub struct HittableList<'a> {
     objects: Vec<&'a dyn Hittable>,
@@ -48,7 +48,11 @@ impl Hittable for HittableList<'_> {
 mod test {
 
     use super::{HitRecord, HittableList};
-    use crate::{material::Lambertian, Color3, Hittable, Point3, Ray, Sphere, Vec3};
+    use crate::{
+        hittable::{Hittable, Sphere},
+        material::Lambertian,
+        Color3, Point3, Ray, Vec3,
+    };
 
     #[test]
     fn it_should_detect_intersection_of_aligned_spheres() {

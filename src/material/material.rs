@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use rand::rngs::ThreadRng;
 
-use crate::{Color3, HitRecord, Ray};
+use crate::{hittable::HitRecord, Color3, Ray};
 
 pub trait Material: Debug + Sync {
     /// # returns

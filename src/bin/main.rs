@@ -5,8 +5,9 @@ use std::{
 };
 
 use gpu_attempt::{
+    hittable::{Hittable, HittableList, Sphere},
     material::{Dielectric, Lambertian, Material, Metal},
-    Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3,
+    Camera, Color3, Point3, Ray, Vec3,
 };
 use rand::{rngs::ThreadRng, Rng};
 
@@ -135,8 +136,8 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel = 500; // 500 is great
-                                 // max number of ray bounces
+    let samples_per_pixel = 5; // 500 is great
+                               // max number of ray bounces
     let max_depth = 50;
 
     // World ------------------------------------
