@@ -36,8 +36,8 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel = 500;
-    // max number of ray bounces
+    let samples_per_pixel = 500; // 500 is great
+                                 // max number of ray bounces
     let max_depth = 50;
 
     // World ------------------------------------
@@ -109,8 +109,18 @@ fn main() {
     let look_at = Point3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let vertical_fov = 20.0;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
 
-    let camera = Camera::new(&look_from, &look_at, &vup, vertical_fov, aspect_ratio);
+    let camera = Camera::new(
+        &look_from,
+        &look_at,
+        &vup,
+        vertical_fov,
+        aspect_ratio,
+        aperture,
+        focus_distance,
+    );
 
     // Render -----------------------------------
 
@@ -128,7 +138,7 @@ fn main() {
                 let u = (i as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
 
-                let ray = camera.get_ray(u, v);
+                let ray = camera.get_ray(u, v, &mut rng);
 
                 pixel_color += ray_color(&ray, &world, max_depth, &mut rng);
             }

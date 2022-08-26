@@ -67,6 +67,21 @@ impl Vec3 {
         }
     }
 
+    /// create a vector in the unit sphere.
+    pub fn new_random_in_unit_disk(rng: &mut impl Rng) -> Self {
+        loop {
+            let vector = Self {
+                x: rng.gen_range(-1.0..=1.0),
+                y: rng.gen_range(-1.0..=1.0),
+                z: 0.0,
+            };
+
+            if vector.mag_squared() < 1.0 {
+                return vector;
+            }
+        }
+    }
+
     pub fn new_randow_unit_vector(rng: &mut impl Rng) -> Self {
         Self::new_randow_in_unit_sphere(rng).normalize()
     }
