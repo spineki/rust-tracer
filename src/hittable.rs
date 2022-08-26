@@ -29,7 +29,7 @@ impl<'h> HitRecord<'h> {
     {
         let front_face = ray.direction().dot(outward_normal) < 0.0;
         let normal = if front_face {
-            outward_normal.clone()
+            *outward_normal
         } else {
             *outward_normal * (-1.0)
         };
@@ -38,7 +38,7 @@ impl<'h> HitRecord<'h> {
             front_face,
             material,
             normal,
-            point: point.clone(),
+            point: *point,
             t,
         }
     }

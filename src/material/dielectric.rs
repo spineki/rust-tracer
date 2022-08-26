@@ -1,7 +1,7 @@
 use rand::{rngs::ThreadRng, Rng};
 
 use super::Material;
-use crate::{Color3, HitRecord, Ray, Vec3};
+use crate::{Color3, HitRecord, Ray};
 
 /// A Dielectric material that reflects and refracts light
 #[derive(Debug)]

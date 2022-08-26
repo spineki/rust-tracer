@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use rand::rngs::ThreadRng;
 
-use crate::{Color3, HitRecord, Ray, Vec3};
+use crate::{Color3, HitRecord, Ray};
 
 pub trait Material: Debug {
     /// # returns

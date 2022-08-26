@@ -6,7 +6,7 @@ use rand::{rngs::ThreadRng, Rng};
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut ThreadRng) -> Color3 {
     // the ray bounced too many times, we abort the ray and return no light (black)
-    if depth <= 0 {
+    if depth == 0 {
         return Color3::new(0.0, 0.0, 0.0);
     }
 
@@ -29,17 +29,18 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut ThreadRng) -
 }
 
 fn main() {
-    // Rng
+    // Rng --------------------------------------
     let mut rng = rand::thread_rng();
 
-    // Image
+    // Image ------------------------------------
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let samples_per_pixel = 500;
+    // max number of ray bounces
     let max_depth = 50;
 
-    // World
+    // World ------------------------------------
 
     let mut world = HittableList::new();
 
@@ -133,6 +134,6 @@ fn main() {
             }
             pixel_color.write(samples_per_pixel);
         }
-        println!("");
+        println!();
     }
 }
