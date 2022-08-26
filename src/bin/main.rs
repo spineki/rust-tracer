@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use gpu_attempt::{
     material::{Dielectric, Lambertian, Material, Metal},
     Camera, Color3, Hittable, HittableList, Point3, Ray, Sphere, Vec3,
@@ -28,7 +30,66 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32, rng: &mut ThreadRng) -
     Color3::new(1.0, 1.0, 1.0) * (1.0 - t) + Color3::new(0.5, 0.7, 1.0) * t
 }
 
+/// compute a scene:
+/// if dry_mode is true, computation are made but are not streamed to stdout
+fn compute_scene(
+    camera: &Camera,
+    world: &HittableList,
+    image_width: u32,
+    image_height: u32,
+    samples_per_pixel: u32,
+    max_depth: u32,
+) -> Vec<Vec<Color3>> {
+    let mut scene = vec![vec![Color3::white(); image_width as usize]; image_height as usize];
+
+    let mut rng = rand::thread_rng();
+
+    for i in (0..image_height).rev() {
+        eprint!("\r remaining {i}");
+
+        for j in 0..image_width {
+            let mut pixel_color = Color3::black();
+
+            for _ in 0..samples_per_pixel {
+                let u = (j as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
+                let v = (i as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
+
+                let ray = camera.get_ray(u, v, &mut rng);
+
+                pixel_color += ray_color(&ray, world, max_depth, &mut rng);
+            }
+
+            scene[i as usize][j as usize] = pixel_color;
+        }
+    }
+
+    scene
+}
+
+/// save a scene in ppm format
+/// the incoming schene is expected to be an vector of rows.
+/// So we iterate this way: scene[line][column]
+/// the sample per pixels is necessary to scale colors down and then apply gamma correction
+fn save_scene(scene: &Vec<Vec<Color3>>, samples_per_pixel: u32) {
+    let nb_lines = scene.len();
+    let nb_columns = scene[0].len();
+
+    println!("P3");
+    println!("{} {}", nb_columns, nb_lines);
+    println!("255");
+
+    for i in (0..nb_lines).rev() {
+        for j in 0..nb_columns {
+            let pixel_color = scene[i][j];
+            pixel_color.write(samples_per_pixel);
+        }
+        println!();
+    }
+}
+
 fn main() {
+    let starting_time = Instant::now();
+
     // Rng --------------------------------------
     let mut rng = rand::thread_rng();
 
@@ -36,8 +97,8 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel = 500; // 500 is great
-                                 // max number of ray bounces
+    let samples_per_pixel = 5; // 500 is great
+                               // max number of ray bounces
     let max_depth = 50;
 
     // World ------------------------------------
@@ -124,26 +185,19 @@ fn main() {
 
     // Render -----------------------------------
 
-    println!("P3");
-    println!("{image_width} {image_height}");
-    println!("255");
+    let scene = compute_scene(
+        &camera,
+        &world,
+        image_width,
+        image_height,
+        samples_per_pixel,
+        max_depth,
+    );
 
-    for j in (0..image_height).rev() {
-        eprint!("\r remaining {j}");
+    let duration = starting_time.elapsed();
+    eprintln!("the rendering function took {:?} to run", duration);
 
-        for i in 0..image_width {
-            let mut pixel_color = Color3::black();
-
-            for _ in 0..samples_per_pixel {
-                let u = (i as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
-                let v = (j as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
-
-                let ray = camera.get_ray(u, v, &mut rng);
-
-                pixel_color += ray_color(&ray, &world, max_depth, &mut rng);
-            }
-            pixel_color.write(samples_per_pixel);
-        }
-        println!();
-    }
+    eprintln!("Saving the values to a file...");
+    // comment this for benchmarks
+    save_scene(&scene, samples_per_pixel);
 }
