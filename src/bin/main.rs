@@ -72,6 +72,7 @@ fn compute_scene(
 
                 for i in current_line..(current_line + nb_line_per_thread).min(image_height) {
                     // eprint!("\r remaining lines {}", image_height - i);
+                    let mut row = Vec::with_capacity(image_width as usize);
 
                     for j in 0..image_width {
                         let mut pixel_color = Color3::black();
@@ -85,8 +86,9 @@ fn compute_scene(
                             pixel_color += ray_color(&ray, world, max_depth, &mut rng);
                         }
 
-                        scene.lock().unwrap()[i as usize][j as usize] = pixel_color;
+                        row.push(pixel_color);
                     }
+                    scene.lock().unwrap()[i as usize] = row;
                 }
             });
             handles.push(handle);
@@ -133,8 +135,8 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel = 5; // 500 is great
-                               // max number of ray bounces
+    let samples_per_pixel = 500; // 500 is great
+                                 // max number of ray bounces
     let max_depth = 50;
 
     // World ------------------------------------
