@@ -4,7 +4,7 @@ use rand::rngs::ThreadRng;
 
 use crate::{Color3, HitRecord, Ray};
 
-pub trait Material: Debug {
+pub trait Material: Debug + Sync {
     /// # returns
     /// scattered ray
     /// color

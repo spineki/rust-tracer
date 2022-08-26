@@ -1,4 +1,8 @@
-use std::time::Instant;
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+    time::Instant,
+};
 
 use gpu_attempt::{
     material::{Dielectric, Lambertian, Material, Metal},
@@ -40,30 +44,62 @@ fn compute_scene(
     samples_per_pixel: u32,
     max_depth: u32,
 ) -> Vec<Vec<Color3>> {
-    let mut scene = vec![vec![Color3::white(); image_width as usize]; image_height as usize];
+    let scene = Arc::new(Mutex::new(vec![
+        vec![Color3::white(); image_width as usize];
+        image_height as usize
+    ]));
 
-    let mut rng = rand::thread_rng();
+    let nb_thread = 4;
 
-    for i in (0..image_height).rev() {
-        eprint!("\r remaining {i}");
+    // taking in account rounding up
+    let nb_line_per_thread = if image_height % nb_thread == 0 {
+        image_height / nb_thread
+    } else {
+        1 + image_height / nb_thread
+    };
 
-        for j in 0..image_width {
-            let mut pixel_color = Color3::black();
+    thread::scope(|scope| {
+        let mut handles = Vec::new();
 
-            for _ in 0..samples_per_pixel {
-                let u = (j as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
-                let v = (i as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
+        for num_thread in 0..nb_thread {
+            // cloning the arc to be able to share reference of underlying data
+            let scene = scene.clone();
 
-                let ray = camera.get_ray(u, v, &mut rng);
+            let current_line = num_thread * nb_line_per_thread;
 
-                pixel_color += ray_color(&ray, world, max_depth, &mut rng);
-            }
+            let handle = scope.spawn(move || {
+                let mut rng = rand::thread_rng();
 
-            scene[i as usize][j as usize] = pixel_color;
+                for i in current_line..(current_line + nb_line_per_thread).min(image_height) {
+                    // eprint!("\r remaining lines {}", image_height - i);
+
+                    for j in 0..image_width {
+                        let mut pixel_color = Color3::black();
+
+                        for _ in 0..samples_per_pixel {
+                            let u = (j as f64 + rng.gen::<f64>()) / (image_width - 1) as f64;
+                            let v = (i as f64 + rng.gen::<f64>()) / (image_height - 1) as f64;
+
+                            let ray = camera.get_ray(u, v, &mut rng);
+
+                            pixel_color += ray_color(&ray, world, max_depth, &mut rng);
+                        }
+
+                        scene.lock().unwrap()[i as usize][j as usize] = pixel_color;
+                    }
+                }
+            });
+            handles.push(handle);
         }
-    }
 
-    scene
+        for handle in handles {
+            handle
+                .join()
+                .expect("an error occured while joining threads");
+        }
+    });
+
+    Arc::try_unwrap(scene).unwrap().into_inner().unwrap()
 }
 
 /// save a scene in ppm format
