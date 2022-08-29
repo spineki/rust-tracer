@@ -1,5 +1,7 @@
 use crate::{material::Material, Point3, Ray, Vec3};
 
+use super::Triangle;
+
 #[derive(Debug)]
 pub struct HitRecord<'a> {
     /// if true, the ray hit the front face
@@ -46,4 +48,34 @@ impl<'h> HitRecord<'h> {
 
 pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+}
+
+/// This trait should be implemented for shapes that are compound shapes
+/// (a square = 2 triangles)
+/// (a tetrahedron = 4 triangles)
+pub trait MultiFaceHittable: Send + Sync + Hittable {
+    fn get_closest_hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let objects = self.get_faces();
+
+        let mut closest_hit_record: Option<HitRecord> = None;
+
+        for object in objects {
+            if let Some(hit_record) = object.hit(ray, t_min, t_max) {
+                match closest_hit_record {
+                    None => {
+                        closest_hit_record = Some(hit_record);
+                    }
+                    Some(ref closest_hit_record_value) => {
+                        if hit_record.t < closest_hit_record_value.t {
+                            closest_hit_record = Some(hit_record);
+                        }
+                    }
+                }
+            }
+        }
+
+        closest_hit_record
+    }
+
+    fn get_faces(&self) -> &Vec<Triangle>;
 }

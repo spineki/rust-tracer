@@ -7,7 +7,7 @@ use std::{
 };
 
 use gpu_attempt::{
-    hittable::{Hittable, HittableList, Sphere, Triangle},
+    hittable::{Hittable, HittableList, Sphere, Tetrahedron, Triangle},
     material::{Dielectric, Lambertian, Material, Metal},
     Camera, Color3, Point3, Ray, Vec3,
 };
@@ -221,13 +221,23 @@ fn main() {
     // finally adding triangles for tests
 
     let triangle = Triangle::new(
-        &Point3::new(3.0, 0.0, 3.0),
-        &Point3::new(3.0, 0.0, 0.0),
-        &Point3::new(3.0, 2.0, 3.0),
+        &Point3::new(0.0, 2.0, 0.0),
+        &Point3::new(-1.0, 0.0, 0.0),
+        &Point3::new(1.0, 0.0, 1.0),
         &material_metal,
     );
-
     world.add(&triangle);
+
+    // a vector to move the tetrahedron (which is centered on 0)
+    let side = Vec3::new(2.0, 0.0, 2.0);
+    let tetrahedron = Tetrahedron::new(
+        &(Point3::new(1.0, 1.5, 0.0) + side),
+        &(Point3::new(-1.0, 2.0, 1.0) + side),
+        &(Point3::new(-1.0, 2.0, -1.0) + side),
+        &(Point3::new(0.0, 0.0, 0.0) + side),
+        &material_metal,
+    );
+    world.add(&tetrahedron);
 
     // Camera -----------------------------------
     let look_from = Point3::new(13.0, 2.0, 3.0);
