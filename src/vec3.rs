@@ -14,7 +14,7 @@ pub type Point3 = Vec3;
 pub type Color3 = Vec3;
 
 impl Color3 {
-    pub fn write(&self, samples_per_pixel: u32) {
+    pub fn as_ppm(&self, samples_per_pixel: u32) -> String {
         let scale = 1.0 / samples_per_pixel as f64;
 
         // scale the color per sample and add a gamma correct of 2 (sqrrt = power 1/2)
@@ -28,7 +28,7 @@ impl Color3 {
         let ig = (256.0 * g.clamp(0.0, 0.999)) as u32;
         let ib = (256.0 * b.clamp(0.0, 0.999)) as u32;
 
-        println!("{ir} {ig} {ib}");
+        format!("{ir} {ig} {ib}")
     }
 
     /// a black Color3 with all chanels at 0

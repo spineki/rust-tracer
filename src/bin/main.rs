@@ -1,11 +1,13 @@
 use std::{
+    fs::File,
+    io::Write,
     sync::{Arc, Mutex},
     thread,
     time::Instant,
 };
 
 use gpu_attempt::{
-    hittable::{Hittable, HittableList, Sphere},
+    hittable::{Hittable, HittableList, Sphere, Triangle},
     material::{Dielectric, Lambertian, Material, Metal},
     Camera, Color3, Point3, Ray, Vec3,
 };
@@ -50,7 +52,7 @@ fn compute_scene(
         image_height as usize
     ]));
 
-    let nb_thread = 4;
+    let nb_thread = 6;
 
     // taking in account rounding up
     let nb_line_per_thread = if image_height % nb_thread == 0 {
@@ -113,20 +115,25 @@ fn save_scene(scene: &Vec<Vec<Color3>>, samples_per_pixel: u32) {
     let nb_lines = scene.len();
     let nb_columns = scene[0].len();
 
-    println!("P3");
-    println!("{} {}", nb_columns, nb_lines);
-    println!("255");
+    let mut file = File::create("scene.ppm").expect("could not create the file");
+    write!(file, "P3\n");
+    write!(file, "{} {}\n", nb_columns, nb_lines);
+    write!(file, "255\n");
 
+    write!(file, "\n");
     for i in (0..nb_lines).rev() {
         for j in 0..nb_columns {
             let pixel_color = scene[i][j];
-            pixel_color.write(samples_per_pixel);
+
+            write!(file, "{}\n", pixel_color.as_ppm(samples_per_pixel));
         }
-        println!();
+        write!(file, "\n");
     }
 }
 
 fn main() {
+    println!("starting rendering");
+
     let starting_time = Instant::now();
 
     // Rng --------------------------------------
@@ -144,6 +151,9 @@ fn main() {
 
     let mut world = HittableList::new();
 
+    // First, adding big spheres ----------------
+
+    // a massive sphere
     let material_ground = Lambertian::new(&Color3::new(0.5, 0.5, 0.5));
     let sphere_ground = Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, &material_ground);
     world.add(&sphere_ground);
@@ -160,11 +170,15 @@ fn main() {
     let sphere_metal = Sphere::new(&Point3::new(4.0, 1.0, 0.0), 1.0, &material_metal);
     world.add(&sphere_metal);
 
+    // Then adding little spheres ---------------
     let mut spheres_element: Vec<(Point3, Box<dyn Material>)> = Vec::new();
     let mut spheres: Vec<Sphere> = Vec::new();
 
-    for a in -11..11 {
-        for b in -11..11 {
+    // number of nodes to display on a grid
+    let nb_grid_nodes = 11; // 11
+
+    for a in -nb_grid_nodes..nb_grid_nodes {
+        for b in -nb_grid_nodes..nb_grid_nodes {
             let random_choose: f64 = rng.gen();
             let center = Point3::new(
                 a as f64 + 0.9 * rng.gen::<f64>(),
@@ -203,6 +217,17 @@ fn main() {
     for sphere in &spheres {
         world.add(sphere);
     }
+
+    // finally adding triangles for tests
+
+    let triangle = Triangle::new(
+        &Point3::new(3.0, 0.0, 3.0),
+        &Point3::new(3.0, 0.0, 0.0),
+        &Point3::new(3.0, 2.0, 3.0),
+        &material_metal,
+    );
+
+    world.add(&triangle);
 
     // Camera -----------------------------------
     let look_from = Point3::new(13.0, 2.0, 3.0);

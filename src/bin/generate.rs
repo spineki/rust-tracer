@@ -16,7 +16,7 @@ fn main() {
                 0.25,
             );
 
-            color.write(100);
+            color.as_ppm(100);
         }
         println!("");
     }
