@@ -103,14 +103,14 @@ impl Vec3 {
         self.x.abs() < epsilon && self.y.abs() < epsilon && self.z.abs() < epsilon
     }
 
-    /// magnitude of the vector (careful, a sqrt is used)
-    pub fn mag(&self) -> f64 {
-        self.mag_squared().sqrt()
-    }
-
     /// squared magnitude of the vector (no sqrt)
     pub fn mag_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    /// magnitude of the vector (careful, a sqrt is used)
+    pub fn mag(&self) -> f64 {
+        self.mag_squared().sqrt()
     }
 
     pub fn normalize(&self) -> Self {

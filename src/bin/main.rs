@@ -7,7 +7,7 @@ use std::{
 };
 
 use gpu_attempt::{
-    hittable::{Hittable, HittableList, Sphere, Tetrahedron, Triangle},
+    hittable::{Hittable, HittableList, Quad, Sphere, Tetrahedron, Triangle},
     material::{Dielectric, Lambertian, Material, Metal},
     Camera, Color3, Point3, Ray, Vec3,
 };
@@ -154,9 +154,19 @@ fn main() {
     // First, adding big spheres ----------------
 
     // a massive sphere
-    let material_ground = Lambertian::new(&Color3::new(0.5, 0.5, 0.5));
-    let sphere_ground = Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, &material_ground);
-    world.add(&sphere_ground);
+    let material_ground = Lambertian::new(&Color3::new(1.0, 0.0, 0.0));
+
+    let displacement = Vec3::new(4.0, 0.0, 0.0);
+
+    let quad_ground = Quad::new(
+        &(Point3::new(1.0, 0.0, -1.0) + displacement),
+        &(Point3::new(1.0, 0.0, 1.0) + displacement),
+        &(Point3::new(-1.0, 0.0, 1.0) + displacement),
+        &(Point3::new(-1.0, 0.0, -1.0) + displacement),
+        &material_ground,
+    );
+
+    world.add(&quad_ground);
 
     let material_dielectric = Dielectric::new(1.5);
     let sphere_dialectric = Sphere::new(&Point3::new(0.0, 1.0, 0.0), 1.0, &material_dielectric);
